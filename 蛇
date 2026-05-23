@@ -1,0 +1,175 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <conio.h>   // _kbhit() _getch()
+#include <windows.h> // Sleep() system()
+
+// 全局变量
+#define WIDTH 20
+#define HEIGHT 20
+
+int snakeX[100], snakeY[100];
+int length = 3;
+int foodX, foodY;
+int dir = 2; // 1上 2右 3下 4左
+int gameOver = 0;
+
+// 函数声明
+void Setup();
+void Draw();
+void Input();
+void Logic();
+
+int main()
+{
+    Setup();
+    while (!gameOver)
+    {
+        Draw();
+        Input();
+        Logic();
+        Sleep(100); // 控制速度
+    }
+    return 0;
+}
+
+// 初始化游戏
+void Setup()
+{
+    // 蛇初始位置（中间）
+    snakeX[0] = WIDTH / 2;
+    snakeY[0] = HEIGHT / 2;
+    snakeX[1] = WIDTH / 2 - 1;
+    snakeY[1] = HEIGHT / 2;
+    snakeX[2] = WIDTH / 2 - 2;
+    snakeY[2] = HEIGHT / 2;
+
+    // 随机食物
+    foodX = rand() % WIDTH;
+    foodY = rand() % HEIGHT;
+}
+
+// 绘制画面
+void Draw()
+{
+    system("cls"); // 清屏
+
+    // 上边框
+    for (int i = 0; i < WIDTH + 2; i++)
+        printf("#");
+    printf("\n");
+
+    // 地图主体
+    for (int y = 0; y < HEIGHT; y++)
+    {
+        for (int x = 0; x < WIDTH; x++)
+        {
+            if (x == 0)
+                printf("#"); // 左边框
+
+            if (x == snakeX[0] && y == snakeY[0])
+                printf("O"); // 蛇头
+            else
+            {
+                int isBody = 0;
+                for (int i = 1; i < length; i++)
+                {
+                    if (snakeX[i] == x && snakeY[i] == y)
+                    {
+                        printf("o"); // 蛇身
+                        isBody = 1;
+                        break;
+                    }
+                }
+                if (!isBody)
+                {
+                    if (x == foodX && y == foodY)
+                        printf("F"); // 食物
+                    else
+                        printf(" ");
+                }
+            }
+
+            if (x == WIDTH - 1)
+                printf("#"); // 右边框
+        }
+        printf("\n");
+    }
+
+    // 下边框
+    for (int i = 0; i < WIDTH + 2; i++)
+        printf("#");
+    printf("\n");
+
+    printf("分数: %d\n", length - 3);
+    printf("方向控制：W上 S下 A左 D右\n");
+}
+
+// 键盘输入
+void Input()
+{
+    if (_kbhit()) // 检测是否按键
+    {
+        switch (_getch())
+        {
+            case 'w':
+            case 'W':
+                if (dir != 3) dir = 1;
+                break;
+            case 's':
+            case 'S':
+                if (dir != 1) dir = 3;
+                break;
+            case 'a':
+            case 'A':
+                if (dir != 2) dir = 4;
+                break;
+            case 'd':
+            case 'D':
+                if (dir != 4) dir = 2;
+                break;
+            case 'x':
+            case 'X':
+                gameOver = 1;
+                break;
+        }
+    }
+}
+
+// 游戏逻辑
+void Logic()
+{
+    // 蛇身跟随
+    for (int i = length - 1; i > 0; i--)
+    {
+        snakeX[i] = snakeX[i - 1];
+        snakeY[i] = snakeY[i - 1];
+    }
+
+    // 移动蛇头
+    switch (dir)
+    {
+        case 1: snakeY[0]--; break;
+        case 2: snakeX[0]++; break;
+        case 3: snakeY[0]++; break;
+        case 4: snakeX[0]--; break;
+    }
+
+    // 撞墙检测
+    if (snakeX[0] < 0 || snakeX[0] >= WIDTH || snakeY[0] < 0 || snakeY[0] >= HEIGHT)
+        gameOver = 1;
+
+    // 撞自己检测
+    for (int i = 1; i < length; i++)
+    {
+        if (snakeX[0] == snakeX[i] && snakeY[0] == snakeY[i])
+            gameOver = 1;
+    }
+
+    // 吃到食物
+    if (snakeX[0] == foodX && snakeY[0] == foodY)
+    {
+        length++;
+        foodX = rand() % WIDTH;
+        foodY = rand() % HEIGHT;
+    }
+}
